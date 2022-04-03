@@ -1,13 +1,19 @@
 [package]
-name = "example-readme"
+name = "apiengine"
 version = "0.1.0"
 edition = "2018"
 publish = false
 
 [dependencies]
-axum = { version = "0.4.5" }
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0.68"
-tokio = { version = "1.0", features = ["full"] }
-tracing = "0.1"
-tracing-subscriber = { version="0.3", features = ["env-filter"] }
+axum = { version = "0.5.0" }
+serde = { version = "1.0.136", features = ["derive"] }
+serde_json = "1.0.79"
+tokio = { version = "1.17.0", features = ["full"] }
+tracing = "0.1.32"
+tracing-subscriber = { version="0.3.9", features = ["env-filter"] }
+hyper = {version = "0.14.17", features = ["full"]}
+pretty_env_logger = "0.4.0"
+hyper-tls = { version = "0.5.0" }
+mongodb = { version = "2.1.0" }
+futures = { version = "0.3.21" }
+urlencoding = { version = "2.1.0" }

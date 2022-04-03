@@ -7,15 +7,15 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug executable 'aaaa'",
+            "name": "Debug executable 'apiengine'",
             "cargo": {
                 "args": [
                     "build",
-                    "--bin=aaaa",
-                    "--package=aaaa"
+                    "--bin=apiengine",
+                    "--package=apiengine"
                 ],
                 "filter": {
-                    "name": "aaaa",
+                    "name": "apiengine",
                     "kind": "bin"
                 }
             },
@@ -25,16 +25,16 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug unit tests in executable 'aaaa'",
+            "name": "Debug unit tests in executable 'apiengine'",
             "cargo": {
                 "args": [
                     "test",
                     "--no-run",
-                    "--bin=aaaa",
-                    "--package=aaaa"
+                    "--bin=apiengine",
+                    "--package=apiengine"
                 ],
                 "filter": {
-                    "name": "aaaa",
+                    "name": "apiengine",
                     "kind": "bin"
                 }
             },
