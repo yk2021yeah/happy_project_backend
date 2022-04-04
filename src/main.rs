@@ -4,8 +4,10 @@ use axum::{
     routing::{get, post},
     Json, Router,
 };
+use chrono::prelude::*;
 use futures::stream::TryStreamExt;
-use mongodb::bson::{doc, oid::ObjectId, Document};
+use mongodb::bson;
+use mongodb::bson::{datetime, doc, oid::ObjectId, DateTime, Document};
 use mongodb::options::{ClientOptions, FindOptions};
 use mongodb::Client;
 use serde::{Deserialize, Serialize};
@@ -20,7 +22,7 @@ async fn main() {
 
     let app = Router::new()
         .route("/check", get(check))
-        .route("/restaurants", get(restaurants))
+        .route("/create_project", get(create_project))
         .route("/find_restaurants", get(get_restaurants))
         .route("/users", post(create_user));
 
@@ -38,24 +40,33 @@ async fn check() -> &'static str {
     "It's working."
 }
 
-async fn restaurants() -> Result<impl IntoResponse, impl IntoResponse> {
+async fn create_project() -> Result<impl IntoResponse, impl IntoResponse> {
     let connection = env::var("MONGODB_CONNECTION_STRING");
     println!("Connection String {}", connection.unwrap());
-    let mut client_options = ClientOptions::parse(
-        env::var("MONGODB_CONNECTION_STRING").unwrap(),
-    )
-    .await
-    .unwrap();
+    let mut client_options = ClientOptions::parse(env::var("MONGODB_CONNECTION_STRING").unwrap())
+        .await
+        .unwrap();
     client_options.app_name = Some("HappyProject".to_string());
     let client = Client::with_options(client_options).unwrap();
 
     let db = client.default_database().unwrap();
-    let collection = db.collection::<Document>("restaurants");
+    let collection = db.collection::<Document>("projects");
 
     let docs = vec![
-        doc! { "borough": "Brooklyn", "cuisine": "American", "name": "YesNo Restaurant" },
-        doc! { "title": "Animal Farm", "author": "George Orwell" },
-        doc! { "title": "The Great Gatsby", "author": "F. Scott Fitzgerald" },
+        doc! {
+            "project_name": "test1",
+            "project_owner_id": "1",
+            "start_date": bson::DateTime::now(),
+            "end_date": bson::DateTime::now(),
+            "project_member_id": "1"
+        },
+        doc! {
+            "project_name": "test1",
+            "project_owner_id": "1",
+            "start_date": bson::DateTime::now(),
+            "end_date": bson::DateTime::now(),
+            "project_member_id": "1"
+        },
     ];
 
     let inserted = collection.insert_many(&docs, None).await;
@@ -66,11 +77,9 @@ async fn restaurants() -> Result<impl IntoResponse, impl IntoResponse> {
 }
 
 async fn get_restaurants() -> impl IntoResponse {
-    let mut client_options = ClientOptions::parse(
-        env::var("MONGODB_CONNECTION_STRING").unwrap()
-    )
-    .await
-    .unwrap();
+    let mut client_options = ClientOptions::parse(env::var("MONGODB_CONNECTION_STRING").unwrap())
+        .await
+        .unwrap();
     client_options.app_name = Some("HappyProject".to_string());
     let client = Client::with_options(client_options).unwrap();
 
@@ -79,10 +88,7 @@ async fn get_restaurants() -> impl IntoResponse {
 
     let filter = doc! { "cuisine": "American", "name": "YesNo Restaurant" };
     let find_options = FindOptions::builder().sort(doc! { "_id": -1 }).build();
-    let mut cursor = collection
-        .find(filter, find_options)
-        .await
-        .unwrap();
+    let mut cursor = collection.find(filter, find_options).await.unwrap();
 
     let mut vec: Vec<Restaurant> = Vec::new();
     while let Some(restaurant) = cursor.try_next().await.unwrap() {
@@ -113,6 +119,17 @@ struct Restaurant {
     name: String,
     cuisine: String,
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+struct Projects {
+    _id: ObjectId,
+    project_name: String,
+    project_owner_id: u64,
+    start_date: DateTime,
+    end_date: DateTime,
+    project_member_id: u64,
+}
+
 // the input to our `create_user` handler
 #[derive(Deserialize)]
 struct CreateUser {
