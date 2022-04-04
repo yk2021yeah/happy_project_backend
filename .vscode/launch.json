@@ -7,34 +7,35 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug executable 'apiengine'",
+            "name": "Debug executable 'happyprojectbackend'",
             "cargo": {
                 "args": [
                     "build",
-                    "--bin=apiengine",
-                    "--package=apiengine"
+                    "--bin=happyprojectbackend",
+                    "--package=happyprojectbackend"
                 ],
                 "filter": {
-                    "name": "apiengine",
+                    "name": "happyprojectbackend",
                     "kind": "bin"
                 }
             },
             "args": [],
-            "cwd": "${workspaceFolder}"
+            "cwd": "${workspaceFolder}",
+            "env": {"MONGODB_CONNECTION_STRING": "${dbgconfig:mongopath}"}
         },
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug unit tests in executable 'apiengine'",
+            "name": "Debug unit tests in executable 'happyprojectbackend'",
             "cargo": {
                 "args": [
                     "test",
                     "--no-run",
-                    "--bin=apiengine",
-                    "--package=apiengine"
+                    "--bin=happyprojectbackend",
+                    "--package=happyprojectbackend"
                 ],
                 "filter": {
-                    "name": "apiengine",
+                    "name": "happyprojectbackend",
                     "kind": "bin"
                 }
             },

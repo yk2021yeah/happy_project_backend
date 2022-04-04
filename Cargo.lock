@@ -32,24 +32,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "apiengine"
-version = "0.1.0"
-dependencies = [
- "axum",
- "futures",
- "hyper",
- "hyper-tls",
- "mongodb",
- "pretty_env_logger",
- "serde",
- "serde_json",
- "tokio",
- "tracing",
- "tracing-subscriber",
- "urlencoding",
-]
-
-[[package]]
 name = "async-trait"
 version = "0.1.52"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -487,6 +469,24 @@ dependencies = [
  "tokio",
  "tokio-util 0.6.9",
  "tracing",
+]
+
+[[package]]
+name = "happyprojectbackend"
+version = "0.1.0"
+dependencies = [
+ "axum",
+ "futures",
+ "hyper",
+ "hyper-tls",
+ "mongodb",
+ "pretty_env_logger",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+ "urlencoding",
 ]
 
 [[package]]
