@@ -4,14 +4,14 @@ use axum::{
     routing::{get, post},
     Json, Router,
 };
-use chrono::prelude::*;
+
 use futures::stream::TryStreamExt;
 use mongodb::bson;
-use mongodb::bson::{datetime, doc, oid::ObjectId, DateTime, Document};
+use mongodb::bson::{doc, oid::ObjectId, DateTime, Document};
 use mongodb::options::{ClientOptions, FindOptions};
 use mongodb::Client;
 use serde::{Deserialize, Serialize};
-use std::env;
+use std::{env};
 use std::net::SocketAddr;
 use std::result::Result;
 
@@ -22,8 +22,9 @@ async fn main() {
 
     let app = Router::new()
         .route("/check", get(check))
-        .route("/create_project", get(create_project))
-        .route("/find_restaurants", get(get_restaurants))
+        .route("/create_projects", get(create_projects))
+        .route("/get_projects", get(get_projects))
+        .route("/update_projects", get(update_projects))
         .route("/users", post(create_user));
 
     // run our app with hyper
@@ -40,7 +41,7 @@ async fn check() -> &'static str {
     "It's working."
 }
 
-async fn create_project() -> Result<impl IntoResponse, impl IntoResponse> {
+async fn create_projects() -> Result<impl IntoResponse, impl IntoResponse> {
     let connection = env::var("MONGODB_CONNECTION_STRING");
     println!("Connection String {}", connection.unwrap());
     let mut client_options = ClientOptions::parse(env::var("MONGODB_CONNECTION_STRING").unwrap())
@@ -55,17 +56,17 @@ async fn create_project() -> Result<impl IntoResponse, impl IntoResponse> {
     let docs = vec![
         doc! {
             "project_name": "test1",
-            "project_owner_id": "1",
-            "start_date": bson::DateTime::now(),
-            "end_date": bson::DateTime::now(),
-            "project_member_id": "1"
+            "project_owner_id": 1,
+            "start_date": bson::DateTime::now().to_rfc3339_string(),
+            "end_date": bson::DateTime::now().to_rfc3339_string(),
+            "project_member_id": 1
         },
         doc! {
             "project_name": "test1",
-            "project_owner_id": "1",
-            "start_date": bson::DateTime::now(),
-            "end_date": bson::DateTime::now(),
-            "project_member_id": "1"
+            "project_owner_id": 1,
+            "start_date": bson::DateTime::now().to_rfc3339_string(),
+            "end_date": bson::DateTime::now().to_rfc3339_string(),
+            "project_member_id": 1
         },
     ];
 
@@ -76,7 +77,7 @@ async fn create_project() -> Result<impl IntoResponse, impl IntoResponse> {
     }
 }
 
-async fn get_restaurants() -> impl IntoResponse {
+async fn get_projects() -> impl IntoResponse {
     let mut client_options = ClientOptions::parse(env::var("MONGODB_CONNECTION_STRING").unwrap())
         .await
         .unwrap();
@@ -84,17 +85,34 @@ async fn get_restaurants() -> impl IntoResponse {
     let client = Client::with_options(client_options).unwrap();
 
     let db = client.default_database().unwrap();
-    let collection = db.collection::<Restaurant>("restaurants");
+    let collection = db.collection::<Projects>("projects");
 
-    let filter = doc! { "cuisine": "American", "name": "YesNo Restaurant" };
+    let filter = doc! { "project_name": "test1" };
     let find_options = FindOptions::builder().sort(doc! { "_id": -1 }).build();
     let mut cursor = collection.find(filter, find_options).await.unwrap();
 
-    let mut vec: Vec<Restaurant> = Vec::new();
-    while let Some(restaurant) = cursor.try_next().await.unwrap() {
-        vec.push(restaurant);
+    let mut vec: Vec<Projects> = Vec::new();
+    while let Some(project) = cursor.try_next().await.unwrap() {
+        vec.push(project);
     }
     (StatusCode::OK, Json(vec))
+}
+
+async fn update_projects() -> impl IntoResponse {
+    let mut client_options = ClientOptions::parse(env::var("MONGODB_CONNECTION_STRING").unwrap())
+        .await
+        .unwrap();
+    client_options.app_name = Some("HappyProject".to_string());
+    let client = Client::with_options(client_options).unwrap();
+
+    let db = client.default_database().unwrap();
+    let collection = db.collection::<Projects>("projects");
+
+    let filter = doc! { "project_name": "test1" };
+    let update = doc!{"$set": {"project_name": "test111"}};
+    let result = collection.update_many(filter, update, None).await.unwrap();
+    
+    (StatusCode::OK, Json(result))
 }
 
 async fn create_user(
@@ -125,8 +143,8 @@ struct Projects {
     _id: ObjectId,
     project_name: String,
     project_owner_id: u64,
-    start_date: DateTime,
-    end_date: DateTime,
+    start_date: String,
+    end_date: String,
     project_member_id: u64,
 }
 
