@@ -10,7 +10,7 @@ Utilizing MongoDB Atlas free account as database and the backend web server API 
 
 ## As an API server to interact with MongoDB
 
-Aim to be a boilerplate project to build REST API server to Mongo. From basic CRUD operations to advanced topics will be implemented.
+Aim to be a boilerplate project to build REST API server to Mongo. From basic CRUD operations to advanced topics will be implemented. Appropriate error handling with proper HTTP status code with Mongo Error message.
 
 ## Frontend
 
