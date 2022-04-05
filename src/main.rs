@@ -148,13 +148,6 @@ async fn create_user(
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-struct Restaurant {
-    _id: ObjectId,
-    name: String,
-    cuisine: String,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
 struct Projects {
     _id: ObjectId,
     project_name: String,
