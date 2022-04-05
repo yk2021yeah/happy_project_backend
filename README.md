@@ -8,6 +8,10 @@ This project aims to create an project management web application which is simpl
 
 Utilizing MongoDB Atlas free account as database and the backend web server API is written in Rust. As a server, axum was picked up since it's under Tokio. At first, preparing CRUD API of project data (note: current code is just at starting point and using non-related sample data provided by MongoDB free account.)
 
+## As an API server to interact with MongoDB
+
+Aim to be a boilerplate project to build REST API server to Mongo. From basic CRUD operations to advanced topics will be implemented.
+
 ## Frontend
 
 will be created as Webassembly by yew stack.
