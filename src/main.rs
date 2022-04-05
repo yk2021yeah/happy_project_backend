@@ -1,17 +1,16 @@
 use axum::{
     http::StatusCode,
     response::IntoResponse,
-    routing::{get, post},
+    routing::{get, post, delete},
     Json, Router,
 };
 
 use futures::stream::TryStreamExt;
-use mongodb::bson;
 use mongodb::bson::{doc, oid::ObjectId, DateTime, Document};
 use mongodb::options::{ClientOptions, FindOptions};
 use mongodb::Client;
 use serde::{Deserialize, Serialize};
-use std::{env};
+use std::env;
 use std::net::SocketAddr;
 use std::result::Result;
 
@@ -25,6 +24,7 @@ async fn main() {
         .route("/create_projects", get(create_projects))
         .route("/get_projects", get(get_projects))
         .route("/update_projects", get(update_projects))
+        .route("/delete_projects", get(delete_projects))
         .route("/users", post(create_user));
 
     // run our app with hyper
@@ -111,6 +111,22 @@ async fn update_projects() -> impl IntoResponse {
     let filter = doc! { "project_name": "test1" };
     let update = doc!{"$set": {"project_name": "test111"}};
     let result = collection.update_many(filter, update, None).await.unwrap();
+    
+    (StatusCode::OK, Json(result))
+}
+
+async fn delete_projects() -> impl IntoResponse {
+    let mut client_options = ClientOptions::parse(env::var("MONGODB_CONNECTION_STRING").unwrap())
+        .await
+        .unwrap();
+    client_options.app_name = Some("HappyProject".to_string());
+    let client = Client::with_options(client_options).unwrap();
+
+    let db = client.default_database().unwrap();
+    let collection = db.collection::<Projects>("projects");
+
+    let filter = doc! { "project_name": "test1" };
+    let result = collection.delete_many(filter, None).await.unwrap();
     
     (StatusCode::OK, Json(result))
 }
