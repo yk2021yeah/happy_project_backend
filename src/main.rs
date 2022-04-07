@@ -1,12 +1,12 @@
 use axum::{
     http::StatusCode,
     response::IntoResponse,
-    routing::{get, post, delete},
+    routing::{get, post},
     Json, Router,
 };
 
 use futures::stream::TryStreamExt;
-use mongodb::{bson::{doc, oid::ObjectId, DateTime, Document}, Database};
+use mongodb::{bson::{doc, oid::ObjectId, Document}, Database};
 use mongodb::options::{ClientOptions, FindOptions};
 use mongodb::Client;
 use serde::{Deserialize, Serialize};
