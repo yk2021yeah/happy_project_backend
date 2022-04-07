@@ -6,7 +6,7 @@ use axum::{
 };
 
 use futures::stream::TryStreamExt;
-use mongodb::bson::{doc, oid::ObjectId, DateTime, Document};
+use mongodb::{bson::{doc, oid::ObjectId, DateTime, Document}, Database};
 use mongodb::options::{ClientOptions, FindOptions};
 use mongodb::Client;
 use serde::{Deserialize, Serialize};
@@ -42,15 +42,7 @@ async fn check() -> &'static str {
 }
 
 async fn create_projects() -> Result<impl IntoResponse, impl IntoResponse> {
-    let connection = env::var("MONGODB_CONNECTION_STRING");
-    println!("Connection String {}", connection.unwrap());
-    let mut client_options = ClientOptions::parse(env::var("MONGODB_CONNECTION_STRING").unwrap())
-        .await
-        .unwrap();
-    client_options.app_name = Some("HappyProject".to_string());
-    let client = Client::with_options(client_options).unwrap();
-
-    let db = client.default_database().unwrap();
+    let db = get_dbinfo().await;
     let collection = db.collection::<Document>("projects");
 
     let docs = vec![
@@ -78,13 +70,7 @@ async fn create_projects() -> Result<impl IntoResponse, impl IntoResponse> {
 }
 
 async fn get_projects() -> impl IntoResponse {
-    let mut client_options = ClientOptions::parse(env::var("MONGODB_CONNECTION_STRING").unwrap())
-        .await
-        .unwrap();
-    client_options.app_name = Some("HappyProject".to_string());
-    let client = Client::with_options(client_options).unwrap();
-
-    let db = client.default_database().unwrap();
+    let db = get_dbinfo().await;
     let collection = db.collection::<Projects>("projects");
 
     let filter = doc! { "project_name": "test1" };
@@ -99,13 +85,7 @@ async fn get_projects() -> impl IntoResponse {
 }
 
 async fn update_projects() -> impl IntoResponse {
-    let mut client_options = ClientOptions::parse(env::var("MONGODB_CONNECTION_STRING").unwrap())
-        .await
-        .unwrap();
-    client_options.app_name = Some("HappyProject".to_string());
-    let client = Client::with_options(client_options).unwrap();
-
-    let db = client.default_database().unwrap();
+    let db = get_dbinfo().await;
     let collection = db.collection::<Projects>("projects");
 
     let filter = doc! { "project_name": "test1" };
@@ -116,19 +96,23 @@ async fn update_projects() -> impl IntoResponse {
 }
 
 async fn delete_projects() -> impl IntoResponse {
-    let mut client_options = ClientOptions::parse(env::var("MONGODB_CONNECTION_STRING").unwrap())
-        .await
-        .unwrap();
-    client_options.app_name = Some("HappyProject".to_string());
-    let client = Client::with_options(client_options).unwrap();
-
-    let db = client.default_database().unwrap();
+    let db = get_dbinfo().await;
     let collection = db.collection::<Projects>("projects");
 
     let filter = doc! { "project_name": "test1" };
     let result = collection.delete_many(filter, None).await.unwrap();
     
     (StatusCode::OK, Json(result))
+}
+
+async fn get_dbinfo() -> Database {
+    let mut client_options = ClientOptions::parse(env::var("MONGODB_CONNECTION_STRING").unwrap())
+        .await
+        .unwrap();
+    client_options.app_name = Some("HappyProject".to_string());
+    let client = Client::with_options(client_options).unwrap();
+
+    client.default_database().unwrap()
 }
 
 async fn create_user(
