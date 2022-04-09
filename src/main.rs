@@ -15,7 +15,6 @@ use mongodb::{
 };
 use std::env;
 use std::net::SocketAddr;
-use std::result::Result;
 
 mod models {
     pub mod project;
@@ -32,7 +31,8 @@ async fn main() {
         .route("/get_projects", get(get_projects))
         .route("/update_projects", get(update_projects))
         .route("/delete_projects", get(delete_projects))
-        .route("/users", post(create_user));
+        .route("/users", post(create_user))
+        .route("/create_projects2", post(create_projects2));
 
     // run our app with hyper
     // `axum::Server` is a re-export of `hyper::Server`
@@ -48,7 +48,7 @@ async fn check() -> &'static str {
     "It's working."
 }
 
-async fn create_projects() -> Result<impl IntoResponse, impl IntoResponse> {
+async fn create_projects() -> impl IntoResponse {
     let db = get_dbinfo().await;
     let collection = db.collection::<Document>("projects");
 
@@ -71,7 +71,23 @@ async fn create_projects() -> Result<impl IntoResponse, impl IntoResponse> {
 
     let inserted = collection.insert_many(&docs, None).await;
     match inserted {
-        Ok(_r) => Ok((StatusCode::CREATED, Json(docs))),
+        Ok(r) => Ok((StatusCode::CREATED, Json(r))),
+        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, Json(e.to_string()))),
+    }
+}
+
+async fn create_projects2(
+    Json(payload): Json<project::Projects>,
+) -> impl IntoResponse {
+    let db = get_dbinfo().await;
+    let collection = db.collection::<project::Projects>("projects");
+
+    let docs = payload;
+    
+
+    let inserted = collection.insert_one(&docs, None).await;
+    match inserted {
+        Ok(r) => Ok((StatusCode::CREATED, Json(r))),
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, Json(e.to_string()))),
     }
 }

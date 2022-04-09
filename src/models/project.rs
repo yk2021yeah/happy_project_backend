@@ -3,13 +3,15 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Projects {
-    _id: ObjectId,
-    project_name: String,
-    project_owner_id: u64,
-    start_date: String,
-    end_date: String,
-    project_member_id: u64,
+    #[serde(skip_deserializing)]
+    pub _id: ObjectId,
+    pub project_name: String,
+    pub project_owner_id: u64,
+    pub start_date: String,
+    pub end_date: String,
+    pub project_member_id: u64,
 }
+
 
 // the input to our `create_user` handler
 #[derive(Deserialize)]
