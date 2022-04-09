@@ -5,14 +5,21 @@ use axum::{
     Json, Router,
 };
 
+use crate::models::project;
 use futures::stream::TryStreamExt;
-use mongodb::{bson::{doc, oid::ObjectId, Document}, Database};
 use mongodb::options::{ClientOptions, FindOptions};
 use mongodb::Client;
-use serde::{Deserialize, Serialize};
+use mongodb::{
+    bson::{doc, Document},
+    Database,
+};
 use std::env;
 use std::net::SocketAddr;
 use std::result::Result;
+
+mod models {
+    pub mod project;
+}
 
 #[tokio::main]
 async fn main() {
@@ -71,13 +78,13 @@ async fn create_projects() -> Result<impl IntoResponse, impl IntoResponse> {
 
 async fn get_projects() -> impl IntoResponse {
     let db = get_dbinfo().await;
-    let collection = db.collection::<Projects>("projects");
+    let collection = db.collection::<project::Projects>("projects");
 
     let filter = doc! { "project_name": "test1" };
     let find_options = FindOptions::builder().sort(doc! { "_id": -1 }).build();
     let mut cursor = collection.find(filter, find_options).await.unwrap();
 
-    let mut vec: Vec<Projects> = Vec::new();
+    let mut vec: Vec<project::Projects> = Vec::new();
     while let Some(project) = cursor.try_next().await.unwrap() {
         vec.push(project);
     }
@@ -86,22 +93,22 @@ async fn get_projects() -> impl IntoResponse {
 
 async fn update_projects() -> impl IntoResponse {
     let db = get_dbinfo().await;
-    let collection = db.collection::<Projects>("projects");
+    let collection = db.collection::<project::Projects>("projects");
 
     let filter = doc! { "project_name": "test1" };
-    let update = doc!{"$set": {"project_name": "test111"}};
+    let update = doc! {"$set": {"project_name": "test111"}};
     let result = collection.update_many(filter, update, None).await.unwrap();
-    
+
     (StatusCode::OK, Json(result))
 }
 
 async fn delete_projects() -> impl IntoResponse {
     let db = get_dbinfo().await;
-    let collection = db.collection::<Projects>("projects");
+    let collection = db.collection::<project::Projects>("projects");
 
     let filter = doc! { "project_name": "test1" };
     let result = collection.delete_many(filter, None).await.unwrap();
-    
+
     (StatusCode::OK, Json(result))
 }
 
@@ -118,10 +125,10 @@ async fn get_dbinfo() -> Database {
 async fn create_user(
     // this argument tells axum to parse the request body
     // as JSON into a `CreateUser` type
-    Json(payload): Json<CreateUser>,
+    Json(payload): Json<project::CreateUser>,
 ) -> impl IntoResponse {
     // insert your application logic here
-    let user = User {
+    let user = project::User {
         id: 1337,
         username: payload.username,
     };
@@ -129,27 +136,4 @@ async fn create_user(
     // this will be converted into a JSON response
     // with a status code of `201 Created`
     (StatusCode::CREATED, Json(user))
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-struct Projects {
-    _id: ObjectId,
-    project_name: String,
-    project_owner_id: u64,
-    start_date: String,
-    end_date: String,
-    project_member_id: u64,
-}
-
-// the input to our `create_user` handler
-#[derive(Deserialize)]
-struct CreateUser {
-    username: String,
-}
-
-// the output to our `create_user` handler
-#[derive(Serialize)]
-struct User {
-    id: u64,
-    username: String,
 }
