@@ -1,5 +1,6 @@
-use mongodb::bson::{doc, oid::ObjectId};
+use mongodb::bson::{document::IntoIter, doc, oid::ObjectId};
 use serde::{Deserialize, Serialize};
+use std::iter::IntoIterator;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Projects {
@@ -11,7 +12,6 @@ pub struct Projects {
     pub end_date: String,
     pub project_member_id: u64,
 }
-
 
 // the input to our `create_user` handler
 #[derive(Deserialize)]

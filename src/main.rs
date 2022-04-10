@@ -27,12 +27,11 @@ async fn main() {
 
     let app = Router::new()
         .route("/check", get(check))
-        .route("/create_projects", get(create_projects))
+        .route("/create_projects", post(create_projects))
         .route("/get_projects", get(get_projects))
         .route("/update_projects", get(update_projects))
         .route("/delete_projects", get(delete_projects))
-        .route("/users", post(create_user))
-        .route("/create_projects2", post(create_projects2));
+        .route("/users", post(create_user));
 
     // run our app with hyper
     // `axum::Server` is a re-export of `hyper::Server`
@@ -48,35 +47,7 @@ async fn check() -> &'static str {
     "It's working."
 }
 
-async fn create_projects() -> impl IntoResponse {
-    let db = get_dbinfo().await;
-    let collection = db.collection::<Document>("projects");
-
-    let docs = vec![
-        doc! {
-            "project_name": "test1",
-            "project_owner_id": 1,
-            "start_date": bson::DateTime::now().to_rfc3339_string(),
-            "end_date": bson::DateTime::now().to_rfc3339_string(),
-            "project_member_id": 1
-        },
-        doc! {
-            "project_name": "test1",
-            "project_owner_id": 1,
-            "start_date": bson::DateTime::now().to_rfc3339_string(),
-            "end_date": bson::DateTime::now().to_rfc3339_string(),
-            "project_member_id": 1
-        },
-    ];
-
-    let inserted = collection.insert_many(&docs, None).await;
-    match inserted {
-        Ok(r) => Ok((StatusCode::CREATED, Json(r))),
-        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, Json(e.to_string()))),
-    }
-}
-
-async fn create_projects2(
+async fn create_projects(
     Json(payload): Json<project::Projects>,
 ) -> impl IntoResponse {
     let db = get_dbinfo().await;
@@ -84,7 +55,6 @@ async fn create_projects2(
 
     let docs = payload;
     
-
     let inserted = collection.insert_one(&docs, None).await;
     match inserted {
         Ok(r) => Ok((StatusCode::CREATED, Json(r))),
