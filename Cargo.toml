@@ -19,3 +19,4 @@ futures = { version = "0.3.21" }
 urlencoding = { version = "2.1.0" }
 chrono = { version = "0.4.19" }
 bson = {version = "2.1.0", features = ["chrono-0_4"]}
+hex = "0.4.3"

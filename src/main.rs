@@ -9,12 +9,13 @@ use crate::models::project;
 use futures::stream::TryStreamExt;
 use mongodb::options::{ClientOptions, FindOptions};
 use mongodb::Client;
-use mongodb::{
-    bson::{doc, Document},
-    Database,
-};
-use std::env;
+use mongodb::{bson::doc, Database};
+use std::borrow::Borrow;
 use std::net::SocketAddr;
+use std::{
+    convert::{TryFrom, TryInto},
+    env,
+};
 
 mod models {
     pub mod project;
@@ -47,15 +48,10 @@ async fn check() -> &'static str {
     "It's working."
 }
 
-async fn create_projects(
-    Json(payload): Json<project::Projects>,
-) -> impl IntoResponse {
+async fn create_projects(Json(payload): Json<Vec<project::Projects>>) -> impl IntoResponse {
     let db = get_dbinfo().await;
     let collection = db.collection::<project::Projects>("projects");
-
-    let docs = payload;
-    
-    let inserted = collection.insert_one(&docs, None).await;
+    let inserted = collection.insert_many(payload, None).await;
     match inserted {
         Ok(r) => Ok((StatusCode::CREATED, Json(r))),
         Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, Json(e.to_string()))),

@@ -479,6 +479,7 @@ dependencies = [
  "bson",
  "chrono",
  "futures",
+ "hex",
  "hyper",
  "hyper-tls",
  "mongodb",

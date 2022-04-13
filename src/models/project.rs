@@ -1,6 +1,6 @@
-use mongodb::bson::{document::IntoIter, doc, oid::ObjectId};
+use mongodb::bson::{doc, document::IntoIter, oid::ObjectId};
 use serde::{Deserialize, Serialize};
-use std::iter::IntoIterator;
+use std::{borrow::Borrow, iter::IntoIterator};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Projects {
