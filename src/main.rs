@@ -10,12 +10,8 @@ use futures::stream::TryStreamExt;
 use mongodb::options::{ClientOptions, FindOptions};
 use mongodb::Client;
 use mongodb::{bson::doc, Database};
-use std::borrow::Borrow;
 use std::net::SocketAddr;
-use std::{
-    convert::{TryFrom, TryInto},
-    env,
-};
+use std::env;
 
 mod models {
     pub mod project;
@@ -32,7 +28,7 @@ async fn main() {
         .route("/get_projects", get(get_projects))
         .route("/update_projects", get(update_projects))
         .route("/delete_projects", get(delete_projects))
-        .route("/users", post(create_user));
+        .route("/create_users", post(create_users));
 
     // run our app with hyper
     // `axum::Server` is a re-export of `hyper::Server`
@@ -104,18 +100,12 @@ async fn get_dbinfo() -> Database {
     client.default_database().unwrap()
 }
 
-async fn create_user(
-    // this argument tells axum to parse the request body
-    // as JSON into a `CreateUser` type
-    Json(payload): Json<project::CreateUser>,
-) -> impl IntoResponse {
-    // insert your application logic here
-    let user = project::User {
-        id: 1337,
-        username: payload.username,
-    };
-
-    // this will be converted into a JSON response
-    // with a status code of `201 Created`
-    (StatusCode::CREATED, Json(user))
+async fn create_users(Json(payload): Json<Vec<project::Users>>) -> impl IntoResponse {
+    let db = get_dbinfo().await;
+    let collection = db.collection::<project::Users>("users");
+    let inserted = collection.insert_many(payload, None).await;
+    match inserted {
+        Ok(r) => Ok((StatusCode::CREATED, Json(r))),
+        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, Json(e.to_string()))),
+    }
 }
