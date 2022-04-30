@@ -4,6 +4,7 @@ use axum::{
     routing::{get, post},
     Json, Router,
 };
+use utils::mongo_errors;
 
 use crate::models::project;
 use futures::stream::TryStreamExt;
@@ -14,6 +15,10 @@ use std::env;
 
 mod models {
     pub mod project;
+}
+
+mod utils {
+    pub mod mongo_errors;
 }
 
 #[tokio::main]
@@ -105,25 +110,35 @@ async fn create_users(Json(payload): Json<Vec<project::Users>>) -> impl IntoResp
     let inserted = collection.insert_many(payload, None).await;
     match inserted {
         Ok(r) => Ok((StatusCode::CREATED, Json(r))),
-        Err(e) => match *e.kind {
-            ErrorKind::InvalidArgument { message , .. } => Err((StatusCode::BAD_REQUEST, Json(message))),
-            ErrorKind::Authentication { message, .. } => Err((StatusCode::UNAUTHORIZED, Json(message))),
-            ErrorKind::BsonDeserialization(_) => Err((StatusCode::INTERNAL_SERVER_ERROR, Json(e.to_string()))),
-            ErrorKind::BsonSerialization(_) => Err((StatusCode::INTERNAL_SERVER_ERROR, Json(e.to_string()))),
-            ErrorKind::BulkWrite(_) => Err((StatusCode::INTERNAL_SERVER_ERROR, Json(e.to_string()))),
-            ErrorKind::Command(_) => Err((StatusCode::INTERNAL_SERVER_ERROR, Json(e.to_string()))),
-            ErrorKind::DnsResolve { message , .. } => Err((StatusCode::INTERNAL_SERVER_ERROR, Json(message))),
-            ErrorKind::Internal { message , .. } => Err((StatusCode::INTERNAL_SERVER_ERROR, Json(message))),
-            ErrorKind::Io(_) => Err((StatusCode::INTERNAL_SERVER_ERROR, Json(e.to_string()))),
-            ErrorKind::ConnectionPoolCleared { message , .. } => Err((StatusCode::INTERNAL_SERVER_ERROR, Json(message))),
-            ErrorKind::InvalidResponse { message , .. } => Err((StatusCode::INTERNAL_SERVER_ERROR, Json(message))),
-            ErrorKind::ServerSelection { message , .. } => Err((StatusCode::INTERNAL_SERVER_ERROR, Json(message))),
-            ErrorKind::SessionsNotSupported => Err((StatusCode::INTERNAL_SERVER_ERROR, Json(e.to_string()))),
-            ErrorKind::InvalidTlsConfig { message , .. } => Err((StatusCode::INTERNAL_SERVER_ERROR, Json(message))),
-            ErrorKind::Write(_) => Err((StatusCode::INTERNAL_SERVER_ERROR, Json(e.to_string()))),
-            ErrorKind::Transaction { message , .. } => Err((StatusCode::INTERNAL_SERVER_ERROR, Json(message))),
-            ErrorKind::IncompatibleServer { message , .. } => Err((StatusCode::INTERNAL_SERVER_ERROR, Json(message))),
-            _ => Err((StatusCode::INTERNAL_SERVER_ERROR, Json(e.to_string()))),
-        } 
+        Err(e) => Err(mongo_errors::mongo_errors(e))
     }
 }
+
+// async fn create_users(Json(payload): Json<Vec<project::Users>>) -> impl IntoResponse {
+//     let db = get_dbinfo().await;
+//     let collection = db.collection::<project::Users>("users");
+//     let inserted = collection.insert_many(payload, None).await;
+//     match inserted {
+//         Ok(r) => Ok((StatusCode::CREATED, Json(r))),
+//         Err(e) => match *e.kind {
+//             ErrorKind::InvalidArgument { message , .. } => Err((StatusCode::BAD_REQUEST, Json(message))),
+//             ErrorKind::Authentication { message, .. } => Err((StatusCode::UNAUTHORIZED, Json(message))),
+//             ErrorKind::BsonDeserialization(_) => Err((StatusCode::INTERNAL_SERVER_ERROR, Json(e.to_string()))),
+//             ErrorKind::BsonSerialization(_) => Err((StatusCode::INTERNAL_SERVER_ERROR, Json(e.to_string()))),
+//             ErrorKind::BulkWrite(_) => Err((StatusCode::INTERNAL_SERVER_ERROR, Json(e.to_string()))),
+//             ErrorKind::Command(_) => Err((StatusCode::INTERNAL_SERVER_ERROR, Json(e.to_string()))),
+//             ErrorKind::DnsResolve { message , .. } => Err((StatusCode::INTERNAL_SERVER_ERROR, Json(message))),
+//             ErrorKind::Internal { message , .. } => Err((StatusCode::INTERNAL_SERVER_ERROR, Json(message))),
+//             ErrorKind::Io(_) => Err((StatusCode::INTERNAL_SERVER_ERROR, Json(e.to_string()))),
+//             ErrorKind::ConnectionPoolCleared { message , .. } => Err((StatusCode::INTERNAL_SERVER_ERROR, Json(message))),
+//             ErrorKind::InvalidResponse { message , .. } => Err((StatusCode::INTERNAL_SERVER_ERROR, Json(message))),
+//             ErrorKind::ServerSelection { message , .. } => Err((StatusCode::INTERNAL_SERVER_ERROR, Json(message))),
+//             ErrorKind::SessionsNotSupported => Err((StatusCode::INTERNAL_SERVER_ERROR, Json(e.to_string()))),
+//             ErrorKind::InvalidTlsConfig { message , .. } => Err((StatusCode::INTERNAL_SERVER_ERROR, Json(message))),
+//             ErrorKind::Write(_) => Err((StatusCode::INTERNAL_SERVER_ERROR, Json(e.to_string()))),
+//             ErrorKind::Transaction { message , .. } => Err((StatusCode::INTERNAL_SERVER_ERROR, Json(message))),
+//             ErrorKind::IncompatibleServer { message , .. } => Err((StatusCode::INTERNAL_SERVER_ERROR, Json(message))),
+//             _ => Err((StatusCode::INTERNAL_SERVER_ERROR, Json(e.to_string()))),
+//         } 
+//     }
+// }
