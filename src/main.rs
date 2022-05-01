@@ -9,9 +9,9 @@ use utils::mongo_errors;
 use crate::models::project;
 use futures::stream::TryStreamExt;
 use mongodb::options::{ClientOptions, FindOptions};
-use mongodb::{Client, bson::doc, Database, error::ErrorKind};
-use std::net::SocketAddr;
+use mongodb::{bson::doc, Client, Database};
 use std::env;
+use std::net::SocketAddr;
 
 mod models {
     pub mod project;
@@ -51,10 +51,10 @@ async fn check() -> &'static str {
 async fn create_projects(Json(payload): Json<Vec<project::Projects>>) -> impl IntoResponse {
     let db = get_dbinfo().await;
     let collection = db.collection::<project::Projects>("projects");
-    let inserted = collection.insert_many(payload, None).await;
-    match inserted {
+    let result = collection.insert_many(payload, None).await;
+    match result {
         Ok(r) => Ok((StatusCode::CREATED, Json(r))),
-        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, Json(e.to_string()))),
+        Err(e) => Err(mongo_errors::mongo_errors(e)),
     }
 }
 
@@ -64,13 +64,17 @@ async fn get_projects() -> impl IntoResponse {
 
     let filter = doc! { "project_name": "test1" };
     let find_options = FindOptions::builder().sort(doc! { "_id": -1 }).build();
-    let mut cursor = collection.find(filter, find_options).await.unwrap();
-
-    let mut vec: Vec<project::Projects> = Vec::new();
-    while let Some(project) = cursor.try_next().await.unwrap() {
-        vec.push(project);
+    let result = collection.find(filter, find_options).await;
+    match result {
+        Ok(mut r) => {
+            let mut vec: Vec<project::Projects> = Vec::new();
+            while let Some(project) = r.try_next().await.unwrap() {
+                vec.push(project);
+            }
+            Ok((StatusCode::OK, Json(vec)))
+        }
+        Err(e) => Err(mongo_errors::mongo_errors(e)),
     }
-    (StatusCode::OK, Json(vec))
 }
 
 async fn update_projects() -> impl IntoResponse {
@@ -79,9 +83,11 @@ async fn update_projects() -> impl IntoResponse {
 
     let filter = doc! { "project_name": "test1" };
     let update = doc! {"$set": {"project_name": "test111"}};
-    let result = collection.update_many(filter, update, None).await.unwrap();
-
-    (StatusCode::OK, Json(result))
+    let result = collection.update_many(filter, update, None).await;
+    match result {
+        Ok(r) => Ok((StatusCode::OK, Json(r))),
+        Err(e) => Err(mongo_errors::mongo_errors(e)),
+    }
 }
 
 async fn delete_projects() -> impl IntoResponse {
@@ -89,9 +95,11 @@ async fn delete_projects() -> impl IntoResponse {
     let collection = db.collection::<project::Projects>("projects");
 
     let filter = doc! { "project_name": "test1" };
-    let result = collection.delete_many(filter, None).await.unwrap();
-
-    (StatusCode::OK, Json(result))
+    let result = collection.delete_many(filter, None).await;
+    match result {
+        Ok(r) => Ok((StatusCode::CREATED, Json(r))),
+        Err(e) => Err(mongo_errors::mongo_errors(e)),
+    }
 }
 
 async fn get_dbinfo() -> Database {
@@ -100,7 +108,6 @@ async fn get_dbinfo() -> Database {
         .unwrap();
     client_options.app_name = Some("HappyProject".to_string());
     let client = Client::with_options(client_options).unwrap();
-
     client.default_database().unwrap()
 }
 
@@ -110,35 +117,6 @@ async fn create_users(Json(payload): Json<Vec<project::Users>>) -> impl IntoResp
     let inserted = collection.insert_many(payload, None).await;
     match inserted {
         Ok(r) => Ok((StatusCode::CREATED, Json(r))),
-        Err(e) => Err(mongo_errors::mongo_errors(e))
+        Err(e) => Err(mongo_errors::mongo_errors(e)),
     }
 }
-
-// async fn create_users(Json(payload): Json<Vec<project::Users>>) -> impl IntoResponse {
-//     let db = get_dbinfo().await;
-//     let collection = db.collection::<project::Users>("users");
-//     let inserted = collection.insert_many(payload, None).await;
-//     match inserted {
-//         Ok(r) => Ok((StatusCode::CREATED, Json(r))),
-//         Err(e) => match *e.kind {
-//             ErrorKind::InvalidArgument { message , .. } => Err((StatusCode::BAD_REQUEST, Json(message))),
-//             ErrorKind::Authentication { message, .. } => Err((StatusCode::UNAUTHORIZED, Json(message))),
-//             ErrorKind::BsonDeserialization(_) => Err((StatusCode::INTERNAL_SERVER_ERROR, Json(e.to_string()))),
-//             ErrorKind::BsonSerialization(_) => Err((StatusCode::INTERNAL_SERVER_ERROR, Json(e.to_string()))),
-//             ErrorKind::BulkWrite(_) => Err((StatusCode::INTERNAL_SERVER_ERROR, Json(e.to_string()))),
-//             ErrorKind::Command(_) => Err((StatusCode::INTERNAL_SERVER_ERROR, Json(e.to_string()))),
-//             ErrorKind::DnsResolve { message , .. } => Err((StatusCode::INTERNAL_SERVER_ERROR, Json(message))),
-//             ErrorKind::Internal { message , .. } => Err((StatusCode::INTERNAL_SERVER_ERROR, Json(message))),
-//             ErrorKind::Io(_) => Err((StatusCode::INTERNAL_SERVER_ERROR, Json(e.to_string()))),
-//             ErrorKind::ConnectionPoolCleared { message , .. } => Err((StatusCode::INTERNAL_SERVER_ERROR, Json(message))),
-//             ErrorKind::InvalidResponse { message , .. } => Err((StatusCode::INTERNAL_SERVER_ERROR, Json(message))),
-//             ErrorKind::ServerSelection { message , .. } => Err((StatusCode::INTERNAL_SERVER_ERROR, Json(message))),
-//             ErrorKind::SessionsNotSupported => Err((StatusCode::INTERNAL_SERVER_ERROR, Json(e.to_string()))),
-//             ErrorKind::InvalidTlsConfig { message , .. } => Err((StatusCode::INTERNAL_SERVER_ERROR, Json(message))),
-//             ErrorKind::Write(_) => Err((StatusCode::INTERNAL_SERVER_ERROR, Json(e.to_string()))),
-//             ErrorKind::Transaction { message , .. } => Err((StatusCode::INTERNAL_SERVER_ERROR, Json(message))),
-//             ErrorKind::IncompatibleServer { message , .. } => Err((StatusCode::INTERNAL_SERVER_ERROR, Json(message))),
-//             _ => Err((StatusCode::INTERNAL_SERVER_ERROR, Json(e.to_string()))),
-//         } 
-//     }
-// }
